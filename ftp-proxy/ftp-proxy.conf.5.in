@@ -383,11 +383,10 @@ options.
 .B LDAPServer
 Global context only.  This is the main option for using an
 .B LDAP
-directory for retrieving user specific values.  If given, it
-denotes the server (and possible port separated by a colon)
-where FTP-Proxy will ask for the attributes.  The program will
-bind as the anonymous user and try to retrieve the values from
-the tree rooted at
+directory for retrieving user specific values.  Connections details
+are given in the form of a URI where FTP-Proxy will ask for the
+required attributes.  The program will bind as the anonymous
+user and try to retrieve the values from the tree rooted at
 .B LDAPBaseDN,
 having an object class of
 .B LDAPObjectClass

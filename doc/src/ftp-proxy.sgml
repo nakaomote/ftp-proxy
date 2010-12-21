@@ -626,10 +626,10 @@ the parsing is done in the different order as "authuser@ftpuser".
 <sect>Using an LDAP Directory
 <label id="ldap">
 <p>
+
 The main option to use an LDAP directory is the <tt>LDAPServer</tt>
-configuration option. If given, it specifies the hostname of the
-directory server (optionally followed by port number separated by
-a colon).
+configuration option. Connections details are given in the form of
+a URI with which FTP-Proxy will ask for the required attributes.
 
 The program will bind the directory using <tt>LDAPBindDN</tt>
 (and <tt>LDAPBindPW</tt>) and retrive the values having an object
