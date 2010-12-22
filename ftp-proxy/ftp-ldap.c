@@ -800,17 +800,23 @@ static int   ldap_auth(LDAP *ld, LDAPMessage *e, char *who, char *pwd, char *bas
 	len = strlen(who) + strlen(base_dn) + 6;
 	user = malloc(len);
 	sprintf(user, "uid=%s,%s", who, base_dn);
+#if defined(COMPILE_DEBUG)
+	debug(2,"Attempting to bind as user user: %s", user);
+#endif
 	lderr = ldap_simple_bind_s(ld, user, pwd);
-	debug(2,"bloody user: %s", user);
 	free(user);
 	if(LDAP_SUCCESS != lderr) {
 		syslog_write(U_ERR, "Incorrect credientials for user: %s", who);
+#if defined(COMPILE_DEBUG)
 		debug(2, "Incorrect credientials for user: %s", who);
+#endif
 		return -1;
 	}
-        syslog_write(T_DBG, "User %s authorized", user);
-        debug(2, "User %s authorized", who);
-        xrc = 2;
+	syslog_write(T_DBG, "User %s authorized", user);
+#if defined(COMPILE_DEBUG)
+	debug(2, "User %s authorized", who);
+#endif
+	xrc = 2;
 
 	/*
 	** OK, all configured manual LDAPAuth checks succeed...
