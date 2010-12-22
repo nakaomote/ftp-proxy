@@ -43,6 +43,16 @@ static char rcsid[] = "$Id: com-socket.c,v 1.7.2.2 2005/01/10 11:37:36 mt Exp $"
 #  include <errno.h>
 #endif
 
+#if defined(HAVE_SYS_TYPES_H)
+#  include <sys/types.h>
+#endif
+#if defined(HAVE_INTTYPES_H)
+#  include <inttypes.h>
+#endif
+#if defined(HAVE_LIMITS_H)
+#  include <limits.h>
+#endif
+
 #if defined(HAVE_UNISTD_H)
 #  include <unistd.h>
 #endif
@@ -121,6 +131,9 @@ static char rcsid[] = "$Id: com-socket.c,v 1.7.2.2 2005/01/10 11:37:36 mt Exp $"
 #   include <netinet/ip_nat.h>
 #endif
 
+#if defined(HAVE_LINUX_TYPES_H)
+#   include <linux/types.h>
+#endif
 #if defined(HAVE_LINUX_NETFILTER_IPV4_H)
 #   include <linux/netfilter_ipv4.h>
 #endif
@@ -311,7 +324,8 @@ static void socket_accept(void)
 	char peer[PEER_LEN] = {0};
 	char dest[PEER_LEN] = {0};
 	struct sockaddr_in saddr;
-	int nsock, len;
+	int nsock;
+	socklen_t len;
 
 	/*
 	** Let the show begin ...
@@ -1014,10 +1028,11 @@ static void socket_ll_read(HLS *hls)
 	** connection (e.g. FTP passive client or active server).
 	*/
 	if (hls->peer[0] == '\0') {
-		memset(&saddr, 0, sizeof(saddr));
-		len = sizeof(saddr);
+		socklen_t slen = sizeof(saddr);
+
+		memset(&saddr, 0, slen);
 		nsock = accept(hls->sock,
-				(struct sockaddr *) &saddr, &len);
+				(struct sockaddr *) &saddr, &slen);
 		if (nsock < 0) {
 			hls->ernr = errno;
 			syslog_error("can't accept %s", hls->ctyp);
@@ -1836,7 +1851,8 @@ char *socket_addr2str(u_int32_t addr)
 u_int32_t socket_sck2addr(int sock, int peer, u_int16_t *port)
 {
 	struct sockaddr_in saddr;
-	int len, r;
+	socklen_t len;
+	int r;
 	char *s;
 
 	/*

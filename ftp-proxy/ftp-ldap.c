@@ -783,7 +783,7 @@ static int   ldap_auth(LDAP *ld, LDAPMessage *e, char *who, char *pwd, char *bas
 			} else {
 				syslog_write(T_DBG,
 				"LDAP auth ok-check: '%.256s'='%.256s' passed",
-				NIL(str), NIL(v));
+				str, NIL(v));
 				xrc = 1;
 			}
 		} else {

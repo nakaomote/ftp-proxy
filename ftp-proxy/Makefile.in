@@ -139,7 +139,7 @@ proc_ftp.o:   proc_ftp.c
 
 install: progs $(CONF_SRC) $(FTP_MAN5) $(FTP_MAN8)
 	$(INSTALL) -d           $(INST_ROOT)$(sbindir)
-	$(INSTALL) -s ftp-proxy $(INST_ROOT)$(sbindir)
+	$(INSTALL)    ftp-proxy $(INST_ROOT)$(sbindir)
 	$(INSTALL) -d           $(INST_ROOT)$(ETC_DIR)
 	@if test -f $(INST_ROOT)$(ETC_DIR)/$(CONF_DST) ; then \
 	  echo "$(INST_ROOT)$(ETC_DIR)/$(CONF_DST) exists; file not touched"; \

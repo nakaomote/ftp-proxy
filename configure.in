@@ -188,6 +188,7 @@ AC_CHECK_PROGS(PS2PDF, ps2pdf)
 AC_HEADER_STDC
 AC_CHECK_HEADERS(unistd.h)
 AC_CHECK_HEADERS(memory.h)
+AC_CHECK_HEADERS(limits.h)
 
 AC_CHECK_HEADERS(syslog.h)
 AC_MSG_CHECKING(whether sys/syslog.h is needed)
@@ -207,7 +208,7 @@ AC_CHECK_HEADERS(net/if.h net/pfvar.h netinet/in_systm.h)
 AC_CHECK_HEADERS(netinet/ip.h netinet/ip_fil.h netinet/ip_nat.h)
 AC_CHECK_HEADERS(netinet/ip_compat.h netinet/ip_fil_compat.h)
 
-AC_CHECK_HEADERS(linux/netfilter_ipv4.h)
+AC_CHECK_HEADERS(linux/types.h linux/netfilter_ipv4.h)
 
 AC_HEADER_SYS_WAIT
 
