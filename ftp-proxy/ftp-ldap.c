@@ -184,40 +184,25 @@ int  ldap_setup_user(CONTEXT *ctx, char *who, char *pwd)
 	** If an LDAP server is configured, insist on using it
 	*/
 	if((ptr = config_str(NULL, "LDAPServer", NULL)) != NULL) {
-		char       temp[MAX_PATH_SIZE];
-		char      *host;
-		u_int16_t  port;
 		int        rc;
 		LDAP      *ld;
 
-		misc_strncpy(temp, ptr, sizeof(temp));
-		/*
-		** Determine LDAP server and port
-		*/
-		host = temp;
-		if(NULL != (ptr = strchr(temp, ':'))) {
-			*ptr++ = '\0';
-			port = (int) socket_str2port(ptr, LDAP_PORT);
-		} else {
-			port = (int) LDAP_PORT;
-		}
-
 #if defined(COMPILE_DEBUG)
-		debug(2, "LDAP server: %s:%d", host, port);
+		debug(2, "LDAP server: %s", ptr);
 #endif
 
 		/*
 		** Ready to contact the LDAP server
 		*/
-		if((ld = ldap_init(host, port)) == NULL) {
+		if(ldap_initialize(&ld, ptr) != LDAP_SUCCESS) {
 			syslog_write(T_ERR,
-			             "can't reach LDAP server %s:%u for %s",
-			             host, port, ctx->cli_ctrl->peer);
+			             "can't reach LDAP server %s for %s",
+			             ptr, ctx->cli_ctrl->peer);
 			return -1;
 		} else {
 			syslog_write(T_DBG,
-			             "LDAP server %s:%u: initialized for %s",
-			              host, port, ctx->cli_ctrl->peer);
+			             "LDAP server %s initialized for %s",
+			              ptr, ctx->cli_ctrl->peer);
 		}
 
 		if(ver > 0) {
@@ -569,7 +554,7 @@ static int ldap_fetch(LDAP *ld, CONTEXT *ctx, char *who, char *pwd)
 		/*
 		** OK, let's check the user auth now
 		*/
-		rc = ldap_auth(ld, a, who, pwd);
+		rc = ldap_auth(ld, a, who, pwd, base_dn);
 		if(res) ldap_msgfree(res);
 		if(0 > rc)  {
 			syslog_write(U_ERR,
