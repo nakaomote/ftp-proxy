@@ -124,7 +124,7 @@ static int   ldap_fetch(LDAP *ld, CONTEXT *ctx, char *who, char *pwd);
 static char *ldap_attrib(LDAP *ld, LDAPMessage *e, char *attr, char *dflt);
 static int   ldap_exists(LDAP *ld, LDAPMessage *e, char *attr,
                                                    char *vstr, int cs);
-static int   ldap_auth(LDAP *ld, LDAPMessage *e, char *who, char *pwd);
+static int   ldap_auth(LDAP *ld, LDAPMessage *e, char *who, char *pwd, char *base_dn);
 static char* prep_bind_auto(LDAP *ld, char *flt, char *base, char *peer);
 static char* prep_bind_fmt(char *str, char *who);
 #endif
@@ -755,10 +755,11 @@ static int ldap_fetch(LDAP *ld, CONTEXT *ctx, char *who, char *pwd)
 **
 ** ------------------------------------------------------------ */
 
-static int   ldap_auth(LDAP *ld, LDAPMessage *e, char *who, char *pwd)
+static int   ldap_auth(LDAP *ld, LDAPMessage *e, char *who, char *pwd, char *base_dn)
 {
 	char str[MAX_PATH_SIZE];
-	char *v, *p, *q;
+	char *v, *p, *user;
+	char lderr;
 	size_t len;
 	int    xrc = 0;
 
@@ -796,82 +797,20 @@ static int   ldap_auth(LDAP *ld, LDAPMessage *e, char *who, char *pwd)
 	/*
 	** check user pass match
 	*/
-	if( (p = config_str(NULL, "LDAPAuthPWAttr", "")) && strlen(p)) {
-		if(NULL == pwd)
-			pwd = "";
-
-		v   = config_str(NULL, "LDAPAuthPWType", "plain");
-		q   = ldap_attrib(ld, e, p, "");
-		p   = 0;
-		len = 0;
-
-		if( !strncasecmp(v, "plain", sizeof("plain")-1)) {
-			/*
-			** plain passwd - no prefix
-			*/
-			len = sizeof("plain")-1;
-			p   = pwd;
-#if defined(HAVE_CRYPT)
-		} else
-		if( !strncasecmp(v, "crypt", sizeof("plain")-1)) {
-			/*
-			** crypt - no prefix
-			*/
-			len = sizeof("plain")-1;
-			p   = crypt(pwd, q);
-		} else
-		if( !strncasecmp(v, "{crypt}", sizeof("{crypt}")-1)) {
-			/*
-			** crypt - {crypt} prefix
-			*/
-			len = sizeof("{crypt}")-1;
-			if(strncasecmp(q, "{crypt}", len)) {
-				syslog_write(T_ERR,
-				             "ldap user auth - prefix missed");
-				return -1;
-			}
-			q+=len;
-			p = crypt(pwd, q);
-#endif
-		} else {
-			errno = 0;
-			misc_die(FL, "ldap_auth: ?LDAPAuthPWType?");
-		}
-
-		/*
-		** check if we have different minimal length
-		** it is coded in latest "char", i.e. plain9
-		*/
-		if(0 < len && strlen(v) == len+1 &&
-		   '0' <= v[len] && '9' >= v[len])
-		{
-			len = (size_t)v[len] - '0';
-		} else	len = PASS_MIN_LEN;
-
-		syslog_write(T_DBG, "LDAP auth pw-type[%d]='%.256s'", len, v);
-#if defined(COMPILE_DEBUG)
-		debug(3,            "LDAP auth pw-check: '%.256s' ?= '%.256s'",
-		                    NIL(q), NIL(p));
-#endif
-
-		/*
-		** check (lenght) and compare passwds; the user
-		** account is locked if LDAP-PWD is "*" or "!"
-		*/
-		if(p && strlen(p)>=len && strlen(q) == strlen(p) &&
-		   !(1==strlen(q) && ('*' == q[0] || '!' == q[0])))
-		{
-			if(0 == strcmp(q, p)) {
-				syslog_write(T_DBG,
-				             "LDAP auth pw-check succeed");
-				return xrc + 2;
-			}
-		}
-		syslog_write(T_DBG, "LDAP auth pw-check failed");
+	len = strlen(who) + strlen(base_dn) + 6;
+	user = malloc(len);
+	sprintf(user, "uid=%s,%s", who, base_dn);
+	lderr = ldap_simple_bind_s(ld, user, pwd);
+	debug(2,"bloody user: %s", user);
+	free(user);
+	if(LDAP_SUCCESS != lderr) {
+		syslog_write(U_ERR, "Incorrect credientials for user: %s", who);
+		debug(2, "Incorrect credientials for user: %s", who);
 		return -1;
-	} else {
-		syslog_write(T_DBG, "LDAP auth pw-check skipped");
 	}
+        syslog_write(T_DBG, "User %s authorized", user);
+        debug(2, "User %s authorized", who);
+        xrc = 2;
 
 	/*
 	** OK, all configured manual LDAPAuth checks succeed...
